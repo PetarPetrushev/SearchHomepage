@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Search</title>
+    <style>
+        :root {
+            /* Light Mode Variables (Pastel & Airy) */
+            --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            --glass-bg: rgba(255, 255, 255, 0.25);
+            --glass-border: rgba(255, 255, 255, 0.4);
+            --text-color: #333;
+            --placeholder-color: #666;
+            --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.15);
+            --accent-color: rgba(255, 255, 255, 0.5);
+            --dropdown-bg: rgba(255, 255, 255, 0.65);
+            --dropdown-hover: rgba(255, 255, 255, 0.8);
+            --input-padding: 12px 20px; /* Thinner padding */
+        }
+
+        @media (prefers-color-scheme: dark) {
+            :root {
+                /* Dark Mode Variables (Deep & Moody) */
+                --bg-gradient: linear-gradient(135deg, #0f2027 0%, #203a43 50%, #2c5364 100%);
+                --glass-bg: rgba(0, 0, 0, 0.3);
+                --glass-border: rgba(255, 255, 255, 0.1);
+                --text-color: #eee;
+                --placeholder-color: #aaa;
+                --shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
+                --accent-color: rgba(255, 255, 255, 0.1);
+                --dropdown-bg: rgba(0, 0, 0, 0.6);
+                --dropdown-hover: rgba(255, 255, 255, 0.1);
+            }
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            background: var(--bg-gradient);
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed; /* Keeps image stable */
+            /* animation: gradientMove 15s ease infinite; Only applied if no image */
+            overflow: hidden;
+            transition: opacity 0.4s ease;
+            position: relative;
+        }
+
+        body.has-image {
+            animation: none; /* Stop gradient animation if image is set */
+        }
+
+        body.has-image::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.2); /* Slight overlay for readability */
+            z-index: -2;
+        }
+
+        /* Subtle animated background movement */
+        @keyframes gradientMove {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Title Styling */
+        .search-title {
+            font-size: 3rem;
+            font-weight: 200;
+            color: var(--text-color);
+            margin-bottom: 1.5rem;
+            letter-spacing: 2px;
+            text-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            opacity: 0.9;
+        }
+
+        /* The main container */
+        .search-container {
+            position: relative;
+            width: 90%;
+            max-width: 680px; /* Made it WIDER */
+            text-align: center;
+            z-index: 10;
+            margin-bottom: 15vh;
+        }
+
+        /* Glassmorphism Input Styling */
+        .search-wrapper {
+            position: relative;
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-radius: 50px;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow);
+            padding: 4px; /* Reduced outer padding */
+            display: flex;
+            align-items: center;
+            transition: box-shadow 0.3s ease, border-color 0.3s ease;
+        }
+
+        .search-wrapper:hover, .search-wrapper:focus-within {
+            box-shadow: 0 12px 40px 0 rgba(0, 0, 0, 0.2);
+            border-color: rgba(255, 255, 255, 0.6);
+        }
+
+        input {
+            width: 100%;
+            background: transparent;
+            border: none;
+            outline: none;
+            padding: var(--input-padding); /* Thinner padding */
+            font-size: 1.1rem;
+            color: var(--text-color);
+            font-weight: 300;
+            height: 100%;
+        }
+
+        input::placeholder {
+            color: var(--placeholder-color);
+            opacity: 0.7;
+        }
+
+        /* Search Icon Button - Strictly Circular */
+        .search-btn {
+            background: var(--accent-color);
+            border: none;
+            border-radius: 50%;
+            width: 40px; /* Slightly smaller to match thinner bar */
+            height: 40px;
+            min-width: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            margin-right: 2px;
+            transition: background 0.3s ease;
+            color: var(--text-color);
+        }
+
+        .search-btn:hover {
+            background: rgba(255, 255, 255, 0.8);
+        }
+        
+        .search-btn svg {
+            width: 18px;
+            height: 18px;
+            stroke: currentColor;
+            stroke-width: 2.5;
+        }
+
+        /* Predictions Dropdown */
+        .predictions {
+            position: absolute;
+            top: 115%;
+            left: 0;
+            width: 100%;
+            background: var(--dropdown-bg);
+            backdrop-filter: blur(15px);
+            -webkit-backdrop-filter: blur(15px);
+            border-radius: 20px;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow);
+            list-style: none;
+            overflow: hidden;
+            max-height: 0;
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            z-index: -1;
+        }
+
+        .predictions.active {
+            max-height: 300px;
+            opacity: 1;
+            padding: 10px 0;
+            z-index: 100;
+        }
+
+        .prediction-item {
+            padding: 10px 25px; /* Thinner items too */
+            text-align: left;
+            cursor: pointer;
+            color: var(--text-color);
+            font-size: 1rem;
+            transition: background 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .prediction-item:hover, .prediction-item.selected {
+            background: var(--dropdown-hover);
+        }
+
+        .prediction-item svg {
+            opacity: 0.5;
+            width: 14px;
+            height: 14px;
+        }
+
+        /* Bottom Footer Area */
+        .footer-controls {
+            position: absolute;
+            bottom: 20px;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            align-items: center;
+            z-index: 20;
+            flex-wrap: wrap;
+        }
+
+        .control-element {
+            appearance: none;
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            border-radius: 15px;
+            padding: 8px 15px;
+            font-size: 0.85rem;
+            color: var(--text-color);
+            outline: none;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            text-align: center;
+            opacity: 0.8;
+            transition: opacity 0.3s, background 0.3s, transform 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .control-element:hover {
+            opacity: 1;
+            background: var(--dropdown-hover);
+        }
+
+        .control-element option {
+            background: #fff;
+            color: #333;
+        }
+
+        /* Settings Modal (Hidden by default) */
+        .settings-panel {
+            position: absolute;
+            bottom: 70px;
+            right: 20px; /* Positioned near right */
+            background: var(--dropdown-bg);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 15px;
+            border-radius: 15px;
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--shadow);
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            width: 250px;
+            z-index: 50;
+        }
+        
+        .settings-panel.open {
+            display: flex;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .settings-label {
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: var(--text-color);
+            margin-bottom: 2px;
+        }
+
+        .bg-input {
+            width: 100%;
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid var(--glass-border);
+            background: rgba(255,255,255,0.1);
+            color: var(--text-color);
+            font-size: 0.8rem;
+            margin-bottom: 5px;
+        }
+        
+        .action-btn {
+            background: var(--glass-bg);
+            border: 1px solid var(--glass-border);
+            padding: 5px 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.8rem;
+            color: var(--text-color);
+            transition: background 0.2s;
+        }
+        
+        .action-btn:hover {
+            background: var(--dropdown-hover);
+        }
+        
+        .btn-group {
+            display: flex;
+            gap: 5px;
+        }
+
+        @media (prefers-color-scheme: dark) {
+            .control-element option {
+                background: #333;
+                color: #fff;
+            }
+        }
+
+        /* Floating background shapes */
+        .shape {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            z-index: -1;
+            animation: float 10s infinite ease-in-out;
+        }
+        
+        .shape-1 {
+            width: 300px;
+            height: 300px;
+            background: rgba(255, 105, 180, 0.4);
+            top: -50px;
+            left: -100px;
+        }
+        
+        .shape-2 {
+            width: 400px;
+            height: 400px;
+            background: rgba(65, 105, 225, 0.4);
+            bottom: -100px;
+            right: -50px;
+            animation-delay: -5s;
+        }
+        
+        /* Hide blobs if custom image is present */
+        body.has-image .shape {
+            display: none;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(30px, 50px); }
+        }
+
+        /* Mobile Adjustments */
+        @media (max-width: 480px) {
+            .search-title {
+                font-size: 2.2rem;
+            }
+            .search-wrapper {
+                border-radius: 30px;
+            }
+            input {
+                padding: 10px 15px;
+                font-size: 1rem;
+            }
+            .settings-panel {
+                right: 50%;
+                transform: translateX(50%);
+                bottom: 80px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Floating blobs for vibes -->
+    <div class="shape shape-1"></div>
+    <div class="shape shape-2"></div>
+
+    <h1 class="search-title">Search</h1>
+
+    <div class="search-container">
+        <form id="search-form" onsubmit="handleSearch(event)">
+            <div class="search-wrapper">
+                <input type="text" id="search-input" placeholder="Type to search..." autocomplete="off" autofocus>
+                <button type="submit" class="search-btn" aria-label="Search">
+                    <svg fill="none" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                    </svg>
+                </button>
+            </div>
+            <ul class="predictions" id="predictions-list"></ul>
+        </form>
+    </div>
+
+    <!-- Footer Controls -->
+    <div class="footer-controls">
+        <!-- Engine Select -->
+        <select id="engine-select" class="control-element" onchange="changeEngine()">
+            <option value="bing">Bing</option>
+            <option value="google">Google</option>
+            <option value="duckduckgo">DuckDuckGo</option>
+            <option value="ecosia">Ecosia</option>
+            <option value="brave">Brave</option>
+            <option value="yandex">Yandex</option>
+        </select>
+
+        <!-- Background Settings Toggle -->
+        <button class="control-element" onclick="toggleSettings()">
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+            </svg>
+            Background
+        </button>
+    </div>
+
+    <!-- Hidden Settings Panel -->
+    <div id="settings-panel" class="settings-panel">
+        <div class="settings-label">Custom Image URL</div>
+        <input type="text" id="bg-url-input" class="bg-input" placeholder="Paste image URL here...">
+        <div class="btn-group">
+            <button class="action-btn" onclick="applyCustomBg()">Set</button>
+            <button class="action-btn" onclick="resetBg()">Reset to Default</button>
+        </div>
+        
+        <div class="settings-label" style="margin-top: 10px;">Quick Options</div>
+        <div class="btn-group">
+            <button class="action-btn" style="width: 100%" onclick="setRandomBg()">Random Daily</button>
+        </div>
+    </div>
+
+    <script>
+        const input = document.getElementById('search-input');
+        const list = document.getElementById('predictions-list');
+        const form = document.getElementById('search-form');
+        const engineSelect = document.getElementById('engine-select');
+        const settingsPanel = document.getElementById('settings-panel');
+        let selectedIndex = -1;
+
+        // Engine Configuration
+        const engines = {
+            bing: "https://www.bing.com/search?q=",
+            google: "https://www.google.com/search?q=",
+            duckduckgo: "https://duckduckgo.com/?q=",
+            ecosia: "https://www.ecosia.org/search?q=",
+            brave: "https://search.brave.com/search?q=",
+            yandex: "https://yandex.com/search/?text="
+        };
+
+        // --- BACKGROUND LOGIC ---
+        function toggleSettings() {
+            settingsPanel.classList.toggle('open');
+        }
+        
+        // Close settings when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!settingsPanel.contains(e.target) && !e.target.closest('.control-element')) {
+                settingsPanel.classList.remove('open');
+            }
+        });
+
+        function setBackground(url) {
+            if (!url) return;
+            document.body.style.backgroundImage = `url('${url}')`;
+            document.body.classList.add('has-image');
+            localStorage.setItem('customBg', url);
+        }
+
+        function applyCustomBg() {
+            const url = document.getElementById('bg-url-input').value.trim();
+            if (url) {
+                setBackground(url);
+                settingsPanel.classList.remove('open');
+            }
+        }
+
+        function setRandomBg() {
+            // Using picsum as a reliable placeholder since unsplash source is deprecated/unreliable without API key
+            // Adding a random query param to ensure it refreshes
+            const randomUrl = `https://picsum.photos/1920/1080?random=${new Date().getDate()}`;
+            setBackground(randomUrl);
+            document.getElementById('bg-url-input').value = randomUrl;
+            settingsPanel.classList.remove('open');
+        }
+
+        function resetBg() {
+            document.body.style.backgroundImage = '';
+            document.body.classList.remove('has-image');
+            localStorage.removeItem('customBg');
+            document.getElementById('bg-url-input').value = '';
+            settingsPanel.classList.remove('open');
+        }
+
+        // Initialize Settings from LocalStorage
+        const savedBg = localStorage.getItem('customBg');
+        if (savedBg) {
+            setBackground(savedBg);
+            document.getElementById('bg-url-input').value = savedBg;
+        }
+
+        // --- SEARCH ENGINE LOGIC ---
+        let currentEngine = localStorage.getItem('preferredEngine') || 'bing';
+        engineSelect.value = currentEngine;
+
+        function changeEngine() {
+            currentEngine = engineSelect.value;
+            localStorage.setItem('preferredEngine', currentEngine);
+        }
+
+        // --- AUTOCOMPLETE LOGIC ---
+        window.googleSuggestCallback = function(data) {
+            const suggestions = data[1];
+            renderSuggestions(suggestions);
+        };
+
+        input.addEventListener('input', (e) => {
+            const query = e.target.value;
+            if (query.length < 1) {
+                list.classList.remove('active');
+                return;
+            }
+
+            const script = document.createElement('script');
+            script.src = `https://suggestqueries.google.com/complete/search?client=chrome&q=${encodeURIComponent(query)}&callback=googleSuggestCallback`;
+            document.body.appendChild(script);
+            document.body.removeChild(script); 
+        });
+
+        function renderSuggestions(suggestions) {
+            list.innerHTML = '';
+            selectedIndex = -1;
+
+            if (!suggestions || suggestions.length === 0) {
+                list.classList.remove('active');
+                return;
+            }
+
+            suggestions.slice(0, 6).forEach((suggestion, index) => {
+                const li = document.createElement('li');
+                li.className = 'prediction-item';
+                li.innerHTML = `
+                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <span>${suggestion}</span>
+                `;
+                li.addEventListener('click', () => {
+                    input.value = suggestion;
+                    performSearch(suggestion);
+                });
+                list.appendChild(li);
+            });
+
+            list.classList.add('active');
+        }
+
+        input.addEventListener('keydown', (e) => {
+            const items = document.querySelectorAll('.prediction-item');
+            if (items.length === 0) return;
+
+            if (e.key === 'ArrowDown') {
+                e.preventDefault();
+                selectedIndex = (selectedIndex + 1) % items.length;
+                updateSelection(items);
+            } else if (e.key === 'ArrowUp') {
+                e.preventDefault();
+                selectedIndex = (selectedIndex - 1 + items.length) % items.length;
+                updateSelection(items);
+            }
+        });
+
+        function updateSelection(items) {
+            items.forEach((item, idx) => {
+                if (idx === selectedIndex) {
+                    item.classList.add('selected');
+                    input.value = item.querySelector('span').textContent;
+                } else {
+                    item.classList.remove('selected');
+                }
+            });
+        }
+
+        document.addEventListener('click', (e) => {
+            if (!form.contains(e.target)) {
+                list.classList.remove('active');
+            }
+        });
+
+        function handleSearch(e) {
+            e.preventDefault();
+            performSearch(input.value);
+        }
+
+        function performSearch(query) {
+            if (!query.trim()) return;
+
+            // Close suggestions
+            list.classList.remove('active');
+
+            // 1. The Animation (Fade out only, no scaling)
+            document.body.style.transition = 'opacity 0.5s ease';
+            document.body.style.opacity = '0';
+
+            // 2. Redirect
+            setTimeout(() => {
+                const baseUrl = engines[currentEngine] || engines['bing'];
+                window.location.href = `${baseUrl}${encodeURIComponent(query)}`;
+            }, 500);
+        }
+    </script>
+</body>
+</html>
