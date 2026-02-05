@@ -16,7 +16,8 @@
             --accent-color: rgba(255, 255, 255, 0.5);
             --dropdown-bg: rgba(255, 255, 255, 0.65);
             --dropdown-hover: rgba(255, 255, 255, 0.8);
-            --input-padding: 12px 20px; /* Thinner padding */
+            --input-padding: 12px 20px;
+            --url-color: #007bff; /* Bright blue for URLs */
         }
 
         @media (prefers-color-scheme: dark) {
@@ -31,6 +32,7 @@
                 --accent-color: rgba(255, 255, 255, 0.1);
                 --dropdown-bg: rgba(0, 0, 0, 0.6);
                 --dropdown-hover: rgba(255, 255, 255, 0.1);
+                --url-color: #60a5fa; /* Lighter blue for dark mode */
             }
         }
 
@@ -51,30 +53,22 @@
             background: var(--bg-gradient);
             background-size: cover;
             background-position: center;
-            background-attachment: fixed; /* Keeps image stable */
-            /* animation: gradientMove 15s ease infinite; Only applied if no image */
+            background-attachment: fixed;
             overflow: hidden;
             transition: opacity 0.4s ease;
             position: relative;
         }
 
         body.has-image {
-            animation: none; /* Stop gradient animation if image is set */
+            animation: none;
         }
 
         body.has-image::before {
             content: '';
             position: absolute;
             top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.2); /* Slight overlay for readability */
+            background: rgba(0,0,0,0.2);
             z-index: -2;
-        }
-
-        /* Subtle animated background movement */
-        @keyframes gradientMove {
-            0% { background-position: 0% 50%; }
-            50% { background-position: 100% 50%; }
-            100% { background-position: 0% 50%; }
         }
 
         /* Title Styling */
@@ -92,7 +86,7 @@
         .search-container {
             position: relative;
             width: 90%;
-            max-width: 680px; /* Made it WIDER */
+            max-width: 680px;
             text-align: center;
             z-index: 10;
             margin-bottom: 15vh;
@@ -107,7 +101,7 @@
             border-radius: 50px;
             border: 1px solid var(--glass-border);
             box-shadow: var(--shadow);
-            padding: 4px; /* Reduced outer padding */
+            padding: 4px;
             display: flex;
             align-items: center;
             transition: box-shadow 0.3s ease, border-color 0.3s ease;
@@ -123,7 +117,7 @@
             background: transparent;
             border: none;
             outline: none;
-            padding: var(--input-padding); /* Thinner padding */
+            padding: var(--input-padding);
             font-size: 1.1rem;
             color: var(--text-color);
             font-weight: 300;
@@ -135,12 +129,12 @@
             opacity: 0.7;
         }
 
-        /* Search Icon Button - Strictly Circular */
+        /* Search Icon Button */
         .search-btn {
             background: var(--accent-color);
             border: none;
             border-radius: 50%;
-            width: 40px; /* Slightly smaller to match thinner bar */
+            width: 40px;
             height: 40px;
             min-width: 40px;
             display: flex;
@@ -191,7 +185,7 @@
         }
 
         .prediction-item {
-            padding: 10px 25px; /* Thinner items too */
+            padding: 10px 25px;
             text-align: left;
             cursor: pointer;
             color: var(--text-color);
@@ -210,6 +204,17 @@
             opacity: 0.5;
             width: 14px;
             height: 14px;
+        }
+
+        /* Special Styling for URL suggestions */
+        .prediction-item.url-suggestion {
+            color: var(--url-color);
+            font-weight: 500;
+        }
+        
+        .prediction-item.url-suggestion svg {
+            stroke: var(--url-color);
+            opacity: 1;
         }
 
         /* Bottom Footer Area */
@@ -253,11 +258,11 @@
             color: #333;
         }
 
-        /* Settings Modal (Hidden by default) */
+        /* Settings Modal */
         .settings-panel {
             position: absolute;
             bottom: 70px;
-            right: 20px; /* Positioned near right */
+            right: 20px;
             background: var(--dropdown-bg);
             backdrop-filter: blur(20px);
             -webkit-backdrop-filter: blur(20px);
@@ -353,7 +358,6 @@
             animation-delay: -5s;
         }
         
-        /* Hide blobs if custom image is present */
         body.has-image .shape {
             display: none;
         }
@@ -407,7 +411,6 @@
 
     <!-- Footer Controls -->
     <div class="footer-controls">
-        <!-- Engine Select -->
         <select id="engine-select" class="control-element" onchange="changeEngine()">
             <option value="bing">Bing</option>
             <option value="google">Google</option>
@@ -417,7 +420,6 @@
             <option value="yandex">Yandex</option>
         </select>
 
-        <!-- Background Settings Toggle -->
         <button class="control-element" onclick="toggleSettings()">
             <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -464,7 +466,6 @@
             settingsPanel.classList.toggle('open');
         }
         
-        // Close settings when clicking outside
         document.addEventListener('click', (e) => {
             if (!settingsPanel.contains(e.target) && !e.target.closest('.control-element')) {
                 settingsPanel.classList.remove('open');
@@ -487,8 +488,6 @@
         }
 
         function setRandomBg() {
-            // Using picsum as a reliable placeholder since unsplash source is deprecated/unreliable without API key
-            // Adding a random query param to ensure it refreshes
             const randomUrl = `https://picsum.photos/1920/1080?random=${new Date().getDate()}`;
             setBackground(randomUrl);
             document.getElementById('bg-url-input').value = randomUrl;
@@ -503,7 +502,7 @@
             settingsPanel.classList.remove('open');
         }
 
-        // Initialize Settings from LocalStorage
+        // Initialize Settings
         const savedBg = localStorage.getItem('customBg');
         if (savedBg) {
             setBackground(savedBg);
@@ -517,6 +516,20 @@
         function changeEngine() {
             currentEngine = engineSelect.value;
             localStorage.setItem('preferredEngine', currentEngine);
+        }
+
+        // --- URL DETECTION HELPERS ---
+        function isUrl(str) {
+            // Regex to check for domain-like structure or protocol
+            // Matches: http://..., https://..., or just example.com (at least one dot, no spaces)
+            return /^((https?:\/\/)|(www\.))?[\w-]+\.[\w]{2,}(\/.*)?$/i.test(str);
+        }
+
+        function formatUrl(str) {
+            if (!/^https?:\/\//i.test(str)) {
+                return 'http://' + str;
+            }
+            return str;
         }
 
         // --- AUTOCOMPLETE LOGIC ---
@@ -538,28 +551,52 @@
             document.body.removeChild(script); 
         });
 
-        function renderSuggestions(suggestions) {
+        function renderSuggestions(suggestions = []) {
             list.innerHTML = '';
             selectedIndex = -1;
+            const currentVal = input.value.trim();
+            const looksLikeUrl = isUrl(currentVal);
 
-            if (!suggestions || suggestions.length === 0) {
+            // If it looks like a URL, prepend it as a special suggestion
+            let displayList = suggestions.slice(0, 6).map(s => ({ text: s, type: 'search' }));
+            
+            if (looksLikeUrl) {
+                displayList.unshift({ text: currentVal, type: 'url' });
+            }
+
+            if (displayList.length === 0) {
                 list.classList.remove('active');
                 return;
             }
 
-            suggestions.slice(0, 6).forEach((suggestion, index) => {
+            displayList.forEach((item) => {
                 const li = document.createElement('li');
                 li.className = 'prediction-item';
-                li.innerHTML = `
-                    <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                    <span>${suggestion}</span>
-                `;
-                li.addEventListener('click', () => {
-                    input.value = suggestion;
-                    performSearch(suggestion);
-                });
+                
+                if (item.type === 'url') {
+                    li.classList.add('url-suggestion');
+                    li.innerHTML = `
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                        </svg>
+                        <span>${item.text}</span>
+                    `;
+                    li.addEventListener('click', () => {
+                        window.location.href = formatUrl(item.text);
+                    });
+                } else {
+                    li.innerHTML = `
+                        <svg fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                        </svg>
+                        <span>${item.text}</span>
+                    `;
+                    li.addEventListener('click', () => {
+                        input.value = item.text;
+                        performSearch(item.text);
+                    });
+                }
+                
                 list.appendChild(li);
             });
 
@@ -585,7 +622,10 @@
             items.forEach((item, idx) => {
                 if (idx === selectedIndex) {
                     item.classList.add('selected');
-                    input.value = item.querySelector('span').textContent;
+                    // Only update input text if it's NOT a URL suggestion to avoid confusion
+                    // or update it but handle the enter key correctly logic-wise
+                    const text = item.querySelector('span').textContent;
+                    input.value = text;
                 } else {
                     item.classList.remove('selected');
                 }
@@ -609,11 +649,16 @@
             // Close suggestions
             list.classList.remove('active');
 
-            // 1. The Animation (Fade out only, no scaling)
+            // 1. Check if URL
+            if (isUrl(query)) {
+                 window.location.href = formatUrl(query);
+                 return;
+            }
+
+            // 2. Animation & Search
             document.body.style.transition = 'opacity 0.5s ease';
             document.body.style.opacity = '0';
 
-            // 2. Redirect
             setTimeout(() => {
                 const baseUrl = engines[currentEngine] || engines['bing'];
                 window.location.href = `${baseUrl}${encodeURIComponent(query)}`;
